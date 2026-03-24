@@ -106,7 +106,7 @@ export default function App() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
   };
 
   useEffect(() => {
@@ -190,8 +190,19 @@ export default function App() {
           <h1 className="text-base font-semibold text-gray-700">建设 DAU 数据资产</h1>
         </div>
 
-        <ChatList messages={messages} onConfirm={handleConfirm} />
-        <div ref={messagesEndRef} />
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-[1000px] mx-auto px-6 py-8 space-y-6">
+            {messages.map((message, index) => (
+              <ChatMessage
+                key={index}
+                message={message}
+                index={index}
+                onConfirm={handleConfirm}
+              />
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
         <ChatInput disabled={isStreaming} onSend={handleSendMessage} />
       </div>
     </div>
