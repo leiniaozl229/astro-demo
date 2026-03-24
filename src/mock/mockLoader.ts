@@ -1,5 +1,3 @@
-import { Message } from '../types/chat';
-
 export interface MockResponse {
   role: 'assistant' | 'user';
   content: string;
