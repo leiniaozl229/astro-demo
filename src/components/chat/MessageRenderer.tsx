@@ -5,20 +5,25 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { AgentStep } from './AgentStep';
 import { Copy, Check } from 'lucide-react';
+import { RequirementCard, Tab } from './RequirementCard';
 
 interface MessageRendererProps {
   content: string;
   onConfirm?: () => void;
 }
 
-// 解析 [STEP: 标题 | 状态] 语法，返回步骤和剩余文本
-function parseContent(content: string): {
+interface ParsedData {
   steps: { title: string; status: 'success' | 'loading' | 'pending' }[];
   text: string;
   confirmText: string | null;
-} {
+  requirementData: Tab[] | null;
+}
+
+// 解析 [STEP: 标题 | 状态] 语法，返回步骤和剩余文本
+function parseContent(content: string): ParsedData {
   const steps: { title: string; status: 'success' | 'loading' | 'pending' }[] = [];
   let confirmText: string | null = null;
+  let requirementData: Tab[] | null = null;
 
   // 提取 STEP 标记
   const stepRegex = /\[STEP: ([^\]|]+)\s*\|\s*(success|loading|pending)\]/g;
@@ -37,18 +42,30 @@ function parseContent(content: string): {
     confirmText = confirmMatch[1].trim();
   }
 
+  // 提取 REQUIREMENT 数据块
+  const requirementRegex = /\[REQUIREMENT\]([\s\S]*?)\[\/REQUIREMENT\]/;
+  const requirementMatch = requirementRegex.exec(content);
+  if (requirementMatch) {
+    try {
+      requirementData = JSON.parse(requirementMatch[1].trim()) as Tab[];
+    } catch (e) {
+      console.error('Failed to parse requirement data:', e);
+    }
+  }
+
   // 清理标记，保留原始文本格式
   let text = content
     .replace(/\[STEP: [^\]]+\]/g, '')
     .replace(/\[CONFIRM: [^\]]+\]/g, '')
+    .replace(/\[REQUIREMENT\][\s\S]*?\[\/REQUIREMENT\]/g, '')
     .trim();
 
-  return { steps, text, confirmText };
+  return { steps, text, confirmText, requirementData };
 }
 
 export function MessageRenderer({ content, onConfirm }: MessageRendererProps) {
   const [copiedCodeIndex, setCopiedCodeIndex] = React.useState<number | null>(null);
-  const { steps, text, confirmText } = parseContent(content);
+  const { steps, text, confirmText, requirementData } = parseContent(content);
 
   const handleCopyCode = (code: string, index: number) => {
     navigator.clipboard.writeText(code);
@@ -67,6 +84,11 @@ export function MessageRenderer({ content, onConfirm }: MessageRendererProps) {
             <AgentStep key={index} title={step.title} status={step.status} />
           ))}
         </div>
+      )}
+
+      {/* 渲染需求确认卡片 */}
+      {requirementData && requirementData.length > 0 && (
+        <RequirementCard tabs={requirementData} onConfirm={onConfirm} onCancel={onConfirm} />
       )}
 
       {/* 渲染 Markdown 内容 */}
