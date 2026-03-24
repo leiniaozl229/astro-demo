@@ -24,7 +24,7 @@ export function ChatInput({ disabled = false, onSend }: ChatInputProps) {
 
   return (
     <div className="bg-[#f5f7fa] p-6 pb-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-[1000px] mx-auto">
         {/* 卡片式输入框 */}
         <div className="relative bg-white rounded-[20px] border border-blue-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
           <textarea
