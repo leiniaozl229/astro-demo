@@ -11,6 +11,7 @@ export default function App() {
   const [currentResponseIndex, setCurrentResponseIndex] = useState(0);
   const [mockResponses, setMockResponses] = useState<Omit<Message, 'isStreaming'>[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [streamTick, setStreamTick] = useState(0); // 用于流式期间触发滚动
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 加载 mock 数据
@@ -30,9 +31,20 @@ export default function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // 监听 messages 和 isStreaming 状态，实现自动滚动
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isStreaming, streamTick]);
+
+  // 流式期间定期触发滚动
+  useEffect(() => {
+    if (isStreaming) {
+      const timer = setInterval(() => {
+        setStreamTick(prev => prev + 1);
+      }, 300); // 每 300ms 触发一次滚动
+      return () => clearInterval(timer);
+    }
+  }, [isStreaming]);
 
   // 流式完成回调
   const handleStreamComplete = useCallback(() => {
