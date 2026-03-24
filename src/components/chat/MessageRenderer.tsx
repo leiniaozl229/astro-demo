@@ -10,6 +10,7 @@ import { RequirementCard, Tab } from './RequirementCard';
 interface MessageRendererProps {
   content: string;
   onConfirm?: () => void;
+  isStreaming?: boolean;
 }
 
 interface ParsedData {
@@ -63,7 +64,7 @@ function parseContent(content: string): ParsedData {
   return { steps, text, confirmText, requirementData };
 }
 
-export function MessageRenderer({ content, onConfirm }: MessageRendererProps) {
+export function MessageRenderer({ content, onConfirm, isStreaming = false }: MessageRendererProps) {
   const [copiedCodeIndex, setCopiedCodeIndex] = React.useState<number | null>(null);
   // 使用 useMemo 缓存解析结果，避免每次渲染都重新解析
   const { steps, text, confirmText, requirementData } = React.useMemo(
@@ -108,6 +109,10 @@ export function MessageRenderer({ content, onConfirm }: MessageRendererProps) {
                 const currentIndex = codeBlockIndex++;
 
                 if (!inline && language === 'sql') {
+                  // 流式期间，如果代码块不完整，延迟高亮渲染
+                  // 只有当代码块以 ``` 结尾或者是完整的时候才渲染高亮
+                  const isComplete = !isStreaming || codeContent.includes('```') || codeContent.length > 500;
+
                   return (
                     <div className="my-3">
                       <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border border-gray-200 border-b-0 rounded-t-lg">
@@ -126,16 +131,22 @@ export function MessageRenderer({ content, onConfirm }: MessageRendererProps) {
                         </button>
                       </div>
                       <div className="border border-gray-200 border-t-0 rounded-b-lg bg-white">
-                        <SyntaxHighlighter
-                          language={language}
-                          style={oneLight as any}
-                          customStyle={{ background: 'transparent', padding: '16px', fontSize: '12px' } as any}
-                          showLineNumbers={true}
-                          wrapLines
-                          lineNumberStyle={{ color: '#9ca3af', fontSize: '12px', paddingRight: '12px' }}
-                        >
-                          {codeContent}
-                        </SyntaxHighlighter>
+                        {isComplete ? (
+                          <SyntaxHighlighter
+                            language={language}
+                            style={oneLight as any}
+                            customStyle={{ background: 'transparent', padding: '16px', fontSize: '12px' } as any}
+                            showLineNumbers={true}
+                            wrapLines
+                            lineNumberStyle={{ color: '#9ca3af', fontSize: '12px', paddingRight: '12px' }}
+                          >
+                            {codeContent}
+                          </SyntaxHighlighter>
+                        ) : (
+                          <div className="p-4 font-mono text-sm text-gray-600 whitespace-pre">
+                            {codeContent}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

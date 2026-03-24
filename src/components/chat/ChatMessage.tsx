@@ -53,7 +53,7 @@ export const ChatMessage = React.memo(function ChatMessage({ message, index, onM
             <p className="text-sm text-gray-800">{message.content}</p>
           ) : (
             <div className="text-sm text-gray-700">
-              <MessageRenderer content={message.content} onConfirm={onConfirm} />
+              <MessageRenderer content={message.content} onConfirm={onConfirm} isStreaming={message.isStreaming} />
             </div>
           )}
         </div>

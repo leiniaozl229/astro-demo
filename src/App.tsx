@@ -4,6 +4,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { ChatMessage } from './components/chat/ChatMessage';
 import { ChatInput } from './components/chat/ChatInput';
 import { loadAllMockResponses, MockResponse } from './mock/mockLoader';
+import { useStreaming } from './hooks/useStreaming';
 
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -11,6 +12,7 @@ export default function App() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [mockResponses, setMockResponses] = useState<Omit<Message, 'isStreaming'>[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const currentMessageIndexRef = useRef<number>(-1);
 
   // 加载 mock 数据
   useEffect(() => {
@@ -19,13 +21,43 @@ export default function App() {
     });
   }, []);
 
+  // 流式输出完成回调
+  const handleStreamComplete = () => {
+    setMessages((prev) => {
+      const newMessages = [...prev];
+      const idx = currentMessageIndexRef.current;
+      if (idx >= 0 && newMessages[idx]) {
+        newMessages[idx] = { ...newMessages[idx], isStreaming: false };
+      }
+      return newMessages;
+    });
+    setIsStreaming(false);
+    setCurrentResponseIndex((prev) => prev + 1);
+  };
+
+  const { displayContent, isStreaming: hookStreaming, startStream } = useStreaming(handleStreamComplete);
+
+  // 监听流式内容变化，更新消息
+  useEffect(() => {
+    if (displayContent && currentMessageIndexRef.current >= 0) {
+      setMessages((prev) => {
+        const newMessages = [...prev];
+        const idx = currentMessageIndexRef.current;
+        if (newMessages[idx]) {
+          newMessages[idx] = { ...newMessages[idx], content: displayContent, isStreaming: true };
+        }
+        return newMessages;
+      });
+    }
+  }, [displayContent]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, displayContent]);
 
   // 发送用户消息并触发 assistant 回复
   const handleSendMessage = (userInput: string) => {
@@ -43,6 +75,8 @@ export default function App() {
     // 获取当前应该使用的回复
     const responseIndex = currentResponseIndex;
     const response = mockResponses[responseIndex % mockResponses.length];
+    const newMessageIndex = messages.length;
+    currentMessageIndexRef.current = newMessageIndex;
 
     // 立即添加空的 assistant 消息
     setMessages((prev) => [
@@ -54,53 +88,8 @@ export default function App() {
       },
     ]);
 
-    // 流式输出内容
-    const fullContent = response.content;
-    const contentLength = fullContent.length;
-    let currentIndex = 0;
-    let frameCount = 0;
-
-    // 更激进的 chunk 策略 - 按总长度设定固定速度
-    const totalFrames = Math.ceil(contentLength / 50); // 约 50 字/帧
-    const frameInterval = Math.max(16, Math.min(50, 1000 / totalFrames)); // 16-50ms 之间
-
-    const stream = () => {
-      if (currentIndex >= fullContent.length) {
-        setMessages((prev) => {
-          const newMessages = [...prev];
-          newMessages[newMessages.length - 1] = {
-            ...response,
-            isStreaming: false,
-          };
-          return newMessages;
-        });
-        setIsStreaming(false);
-        setCurrentResponseIndex((prev) => prev + 1);
-        return;
-      }
-
-      // 每帧输出更多内容
-      frameCount++;
-      const remaining = fullContent.length - currentIndex;
-      const chunkSize = remaining > 200 ? 60 : 20; // 60 字/帧 (长) 或 20 字/帧 (收尾)
-      currentIndex = Math.min(currentIndex + chunkSize, fullContent.length);
-
-      setMessages((prev) => {
-        const newMessages = [...prev];
-        newMessages[newMessages.length - 1] = {
-          ...response,
-          content: fullContent.slice(0, currentIndex),
-          isStreaming: true,
-        };
-        return newMessages;
-      });
-
-      setTimeout(() => {
-        requestAnimationFrame(stream);
-      }, 16); // 固定 60fps
-    };
-
-    requestAnimationFrame(stream);
+    // 使用 useStreaming hook 开始流式输出
+    startStream(response.content);
   };
 
   // 确认执行按钮处理
