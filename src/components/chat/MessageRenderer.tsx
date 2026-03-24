@@ -64,13 +64,28 @@ function parseContent(content: string): ParsedData {
   return { steps, text, confirmText, requirementData };
 }
 
-export function MessageRenderer({ content, onConfirm, isStreaming = false }: MessageRendererProps) {
+export const MessageRenderer = React.memo(function MessageRenderer({ content, onConfirm, isStreaming = false }: MessageRendererProps) {
   const [copiedCodeIndex, setCopiedCodeIndex] = React.useState<number | null>(null);
-  // 使用 useMemo 缓存解析结果，避免每次渲染都重新解析
+  const [renderedContent, setRenderedContent] = React.useState<React.ReactNode>(null);
+
+  // 使用 useMemo 缓存解析结果
   const { steps, text, confirmText, requirementData } = React.useMemo(
     () => parseContent(content),
     [content]
   );
+
+  // 流式期间使用简化的纯文本渲染，避免昂贵的 Markdown 解析
+  React.useEffect(() => {
+    if (isStreaming) {
+      // 流式期间只渲染纯文本
+      setRenderedContent(
+        <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">{text}</div>
+      );
+    } else {
+      // 流式完成后渲染完整 Markdown
+      setRenderedContent(null); // 让下面的 JSX 重新计算
+    }
+  }, [isStreaming, text]);
 
   const handleCopyCode = (code: string, index: number) => {
     navigator.clipboard.writeText(code);
@@ -79,6 +94,129 @@ export function MessageRenderer({ content, onConfirm, isStreaming = false }: Mes
   };
 
   let codeBlockIndex = 0;
+
+  // 定义 memoized components 对象
+  const markdownComponents = React.useMemo(() => ({
+    code({ node, inline, className, children, ...props }: any) {
+      const match = /language-(\w+)/.exec(className || '');
+      const language = match ? match[1] : 'text';
+      const codeContent = String(children).replace(/\n$/, '');
+      const currentIndex = codeBlockIndex++;
+
+      if (!inline && language === 'sql') {
+        const isComplete = !isStreaming || codeContent.includes('```') || codeContent.length > 500;
+
+        return (
+          <div className="my-3">
+            <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border border-gray-200 border-b-0 rounded-t-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-500">SQL</span>
+              </div>
+              <button
+                onClick={() => handleCopyCode(codeContent, currentIndex)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                {copiedCodeIndex === currentIndex ? (
+                  <Check className="w-4 h-4 text-green-600" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            <div className="border border-gray-200 border-t-0 rounded-b-lg bg-white">
+              {isComplete ? (
+                <SyntaxHighlighter
+                  language={language}
+                  style={oneLight as any}
+                  customStyle={{ background: 'transparent', padding: '16px', fontSize: '12px' } as any}
+                  showLineNumbers={true}
+                  wrapLines
+                  lineNumberStyle={{ color: '#9ca3af', fontSize: '12px', paddingRight: '12px' }}
+                >
+                  {codeContent}
+                </SyntaxHighlighter>
+              ) : (
+                <div className="p-4 font-mono text-sm text-gray-600 whitespace-pre">
+                  {codeContent}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <code className={className} {...props}>
+          {children}
+        </code>
+      );
+    },
+    h4({ children }: { children?: React.ReactNode }) {
+      return (
+        <h4 className="text-sm font-semibold text-gray-800 mt-4 mb-2">
+          {children}
+        </h4>
+      );
+    },
+    strong({ children }: { children?: React.ReactNode }) {
+      return (
+        <strong className="text-gray-900 font-semibold">
+          {children}
+        </strong>
+      );
+    },
+    p({ children }: { children?: React.ReactNode }) {
+      if (!children || String(children).trim() === '') return null;
+      return (
+        <p className="text-gray-700 leading-relaxed mb-2">
+          {children}
+        </p>
+      );
+    },
+    ul({ children }: { children?: React.ReactNode }) {
+      return (
+        <ul className="list-disc list-outside text-gray-700 space-y-1 my-2 pl-5">
+          {children}
+        </ul>
+      );
+    },
+    li({ children }: { children?: React.ReactNode }) {
+      return (
+        <li className="text-gray-700">
+          {children}
+        </li>
+      );
+    },
+    table({ children }: { children?: React.ReactNode }) {
+      return (
+        <div className="overflow-x-auto border border-gray-200 rounded-lg">
+          <table className="min-w-full border-collapse">
+            {children}
+          </table>
+        </div>
+      );
+    },
+    thead({ children }: { children?: React.ReactNode }) {
+      return <thead className="bg-gray-50 border-b border-gray-200">{children}</thead>;
+    },
+    th({ children }: { children?: React.ReactNode }) {
+      return (
+        <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b border-gray-200 border-r last:border-r-0">
+          {children}
+        </th>
+      );
+    },
+    td({ children }: { children?: React.ReactNode }) {
+      return (
+        <td className="px-4 py-2.5 text-sm text-gray-700 border-b border-gray-100 border-r last:border-r-0 whitespace-nowrap">
+          {children}
+        </td>
+      );
+    },
+    tr({ children }: { children?: React.ReactNode }) {
+      return <tr className="hover:bg-gray-50 last:border-b-0">{children}</tr>;
+    },
+  }), [isStreaming, copiedCodeIndex]);
 
   return (
     <div className="w-full space-y-3">
@@ -96,137 +234,21 @@ export function MessageRenderer({ content, onConfirm, isStreaming = false }: Mes
         <RequirementCard tabs={requirementData} onConfirm={onConfirm} onCancel={onConfirm} />
       )}
 
-      {/* 渲染 Markdown 内容 */}
+      {/* 渲染内容：流式期间使用纯文本，完成后使用 Markdown */}
       {text && (
         <div className="prose prose-sm max-w-none">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={{
-              code({ node, inline, className, children, ...props }) {
-                const match = /language-(\w+)/.exec(className || '');
-                const language = match ? match[1] : 'text';
-                const codeContent = String(children).replace(/\n$/, '');
-                const currentIndex = codeBlockIndex++;
-
-                if (!inline && language === 'sql') {
-                  // 流式期间，如果代码块不完整，延迟高亮渲染
-                  // 只有当代码块以 ``` 结尾或者是完整的时候才渲染高亮
-                  const isComplete = !isStreaming || codeContent.includes('```') || codeContent.length > 500;
-
-                  return (
-                    <div className="my-3">
-                      <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border border-gray-200 border-b-0 rounded-t-lg">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-gray-500">SQL</span>
-                        </div>
-                        <button
-                          onClick={() => handleCopyCode(codeContent, currentIndex)}
-                          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
-                        >
-                          {copiedCodeIndex === currentIndex ? (
-                            <Check className="w-4 h-4 text-green-600" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                      <div className="border border-gray-200 border-t-0 rounded-b-lg bg-white">
-                        {isComplete ? (
-                          <SyntaxHighlighter
-                            language={language}
-                            style={oneLight as any}
-                            customStyle={{ background: 'transparent', padding: '16px', fontSize: '12px' } as any}
-                            showLineNumbers={true}
-                            wrapLines
-                            lineNumberStyle={{ color: '#9ca3af', fontSize: '12px', paddingRight: '12px' }}
-                          >
-                            {codeContent}
-                          </SyntaxHighlighter>
-                        ) : (
-                          <div className="p-4 font-mono text-sm text-gray-600 whitespace-pre">
-                            {codeContent}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <code className={className} {...props}>
-                    {children}
-                  </code>
-                );
-              },
-              h4({ children }) {
-                return (
-                  <h4 className="text-sm font-semibold text-gray-800 mt-4 mb-2">
-                    {children}
-                  </h4>
-                );
-              },
-              strong({ children }) {
-                return (
-                  <strong className="text-gray-900 font-semibold">
-                    {children}
-                  </strong>
-                );
-              },
-              p({ children }) {
-                if (!children || String(children).trim() === '') return null;
-                return (
-                  <p className="text-gray-700 leading-relaxed mb-2">
-                    {children}
-                  </p>
-                );
-              },
-              ul({ children }) {
-                return (
-                  <ul className="list-disc list-outside text-gray-700 space-y-1 my-2 pl-5">
-                    {children}
-                  </ul>
-                );
-              },
-              li({ children }) {
-                return (
-                  <li className="text-gray-700">
-                    {children}
-                  </li>
-                );
-              },
-              table({ children }) {
-                return (
-                  <div className="overflow-x-auto border border-gray-200 rounded-lg">
-                    <table className="min-w-full border-collapse">
-                      {children}
-                    </table>
-                  </div>
-                );
-              },
-              thead({ children }) {
-                return <thead className="bg-gray-50 border-b border-gray-200">{children}</thead>;
-              },
-              th({ children }) {
-                return (
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b border-gray-200 border-r last:border-r-0">
-                    {children}
-                  </th>
-                );
-              },
-              td({ children }) {
-                return (
-                  <td className="px-4 py-2.5 text-sm text-gray-700 border-b border-gray-100 border-r last:border-r-0 whitespace-nowrap">
-                    {children}
-                  </td>
-                );
-              },
-              tr({ children }) {
-                return <tr className="hover:bg-gray-50 last:border-b-0">{children}</tr>;
-              },
-            }}
-          >
-            {text}
-          </ReactMarkdown>
+          {isStreaming && renderedContent ? (
+            // 流式期间：纯文本渲染（高性能）
+            renderedContent
+          ) : (
+            // 流式完成后：完整 Markdown 渲染
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={markdownComponents}
+            >
+              {text}
+            </ReactMarkdown>
+          )}
         </div>
       )}
 
@@ -243,4 +265,11 @@ export function MessageRenderer({ content, onConfirm, isStreaming = false }: Mes
       )}
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // 只有当内容、确认回调或流式状态变化时才重新渲染
+  return (
+    prevProps.content === nextProps.content &&
+    prevProps.isStreaming === nextProps.isStreaming &&
+    prevProps.onConfirm === nextProps.onConfirm
+  );
+});

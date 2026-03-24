@@ -1,3 +1,4 @@
+import React from 'react';
 import { cn } from '../../utils/cn';
 import { CheckCircle2, Circle, Loader2 } from 'lucide-react';
 
@@ -6,7 +7,7 @@ interface AgentStepProps {
   status: 'success' | 'loading' | 'pending';
 }
 
-export function AgentStep({ title, status }: AgentStepProps) {
+export const AgentStep = React.memo(function AgentStep({ title, status }: AgentStepProps) {
   const icons = {
     success: (
       <div className="flex items-center justify-center w-5 h-5 bg-green-50 rounded-full">
@@ -43,4 +44,7 @@ export function AgentStep({ title, status }: AgentStepProps) {
       <span className={cn('', textColors[status])}>{title}</span>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // 只有标题或状态变化时才重新渲染
+  return prevProps.title === nextProps.title && prevProps.status === nextProps.status;
+});

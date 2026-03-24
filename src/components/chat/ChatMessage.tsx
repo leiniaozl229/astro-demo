@@ -12,7 +12,7 @@ interface ChatMessageProps {
   onConfirm?: () => void;
 }
 
-export function ChatMessage({ message, index, onMessageComplete, onConfirm }: ChatMessageProps) {
+export const ChatMessage = React.memo(function ChatMessage({ message, index, onMessageComplete, onConfirm }: ChatMessageProps) {
   const isUser = message.role === 'user';
 
   return (
@@ -78,4 +78,15 @@ export function ChatMessage({ message, index, onMessageComplete, onConfirm }: Ch
       </div>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // 只有当以下任一条件变化时才重新渲染：
+  // 1. 消息角色变化（用户 vs 智能体）
+  // 2. 内容变化（流式输出期间）
+  // 3. isStreaming 状态变化（用于显示/隐藏操作按钮）
+  return (
+    prevProps.message.role === nextProps.message.role &&
+    prevProps.message.content === nextProps.message.content &&
+    prevProps.message.isStreaming === nextProps.message.isStreaming &&
+    prevProps.onConfirm === nextProps.onConfirm
+  );
+});

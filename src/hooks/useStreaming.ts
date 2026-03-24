@@ -44,8 +44,8 @@ export const useStreaming = (onFinished?: () => void): UseStreamingReturn => {
       bufferRef.current = "";
 
       let index = 0;
-      const chunkSize = 5; // 每次追加的字符数 - 增加此值可加速感官速度
-      const interval = 24; // 节流频率（毫秒）- 约 40FPS，肉眼舒适的极限
+      const chunkSize = 12; // 每次追加的字符数 - 增加此值可加速
+      const interval = 16; // 节流频率（毫秒）- 约 60FPS
 
       timerRef.current = setInterval(() => {
         if (index < fullText.length) {
@@ -55,7 +55,6 @@ export const useStreaming = (onFinished?: () => void): UseStreamingReturn => {
           index += chunkSize;
 
           // 2. 节流更新：只在此处触发一次 React 渲染
-          // 无论 fullText 有多长，React 的渲染频率都是恒定的
           setDisplayContent(bufferRef.current);
         } else {
           // 结束流
