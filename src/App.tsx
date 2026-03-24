@@ -58,22 +58,11 @@ export default function App() {
     const fullContent = response.content;
     const contentLength = fullContent.length;
     let currentIndex = 0;
+    let frameCount = 0;
 
-    // 根据内容长度动态调整 chunk 大小和时间间隔
-    // 长内容使用更大的 chunk 和更短的间隔，保持总体速度稳定
-    const getChunkSize = () => {
-      const remaining = contentLength - currentIndex;
-      if (remaining > 500) return Math.floor(Math.random() * 15) + 10;  // 长内容：10-25 字
-      if (remaining > 200) return Math.floor(Math.random() * 8) + 5;    // 中等内容：5-13 字
-      return Math.floor(Math.random() * 3) + 1;                          // 短内容：1-3 字
-    };
-
-    const getInterval = () => {
-      const remaining = contentLength - currentIndex;
-      if (remaining > 500) return 15;   // 长内容：15ms
-      if (remaining > 200) return 20;   // 中等内容：20ms
-      return 30;                         // 短内容：30ms
-    };
+    // 更激进的 chunk 策略 - 按总长度设定固定速度
+    const totalFrames = Math.ceil(contentLength / 50); // 约 50 字/帧
+    const frameInterval = Math.max(16, Math.min(50, 1000 / totalFrames)); // 16-50ms 之间
 
     const stream = () => {
       if (currentIndex >= fullContent.length) {
@@ -90,7 +79,10 @@ export default function App() {
         return;
       }
 
-      const chunkSize = getChunkSize();
+      // 每帧输出更多内容
+      frameCount++;
+      const remaining = fullContent.length - currentIndex;
+      const chunkSize = remaining > 200 ? 60 : 20; // 60 字/帧 (长) 或 20 字/帧 (收尾)
       currentIndex = Math.min(currentIndex + chunkSize, fullContent.length);
 
       setMessages((prev) => {
@@ -103,10 +95,9 @@ export default function App() {
         return newMessages;
       });
 
-      // 使用 requestAnimationFrame 获得更好的性能
       setTimeout(() => {
         requestAnimationFrame(stream);
-      }, getInterval());
+      }, 16); // 固定 60fps
     };
 
     requestAnimationFrame(stream);

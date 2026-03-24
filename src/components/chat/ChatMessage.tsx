@@ -1,3 +1,4 @@
+import React from 'react';
 import { Message } from '../types/chat';
 import { User, ThumbsUp, ThumbsDown, RotateCcw, Copy } from 'lucide-react';
 import { MessageRenderer } from './MessageRenderer';
@@ -11,7 +12,7 @@ interface ChatMessageProps {
   onConfirm?: () => void;
 }
 
-export function ChatMessage({ message, index, onMessageComplete, onConfirm }: ChatMessageProps) {
+export const ChatMessage = React.memo(function ChatMessage({ message, index, onMessageComplete, onConfirm }: ChatMessageProps) {
   const isUser = message.role === 'user';
 
   return (
@@ -77,4 +78,8 @@ export function ChatMessage({ message, index, onMessageComplete, onConfirm }: Ch
       </div>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // 只有当消息内容变化或流式状态变化时才重新渲染
+  return prevProps.message.content === nextProps.message.content &&
+    prevProps.message.isStreaming === nextProps.message.isStreaming;
+});

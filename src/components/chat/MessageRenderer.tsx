@@ -65,7 +65,11 @@ function parseContent(content: string): ParsedData {
 
 export function MessageRenderer({ content, onConfirm }: MessageRendererProps) {
   const [copiedCodeIndex, setCopiedCodeIndex] = React.useState<number | null>(null);
-  const { steps, text, confirmText, requirementData } = parseContent(content);
+  // 使用 useMemo 缓存解析结果，避免每次渲染都重新解析
+  const { steps, text, confirmText, requirementData } = React.useMemo(
+    () => parseContent(content),
+    [content]
+  );
 
   const handleCopyCode = (code: string, index: number) => {
     navigator.clipboard.writeText(code);
