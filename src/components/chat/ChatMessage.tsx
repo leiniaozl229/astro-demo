@@ -21,13 +21,7 @@ export function ChatMessage({ message, index, onMessageComplete, onConfirm }: Ch
 
   // 当消息内容变化时（新消息创建），启动流式
   useEffect(() => {
-    console.log('[ChatMessage] useEffect triggered', {
-      isUser,
-      content: message.content?.substring(0, 20),
-      isStreaming: message.isStreaming
-    });
     if (!isUser && message.content && message.isStreaming) {
-      console.log('[ChatMessage] Starting stream...');
       startStream(message.content);
     }
   }, [message.content, message.isStreaming, isUser, startStream]);
