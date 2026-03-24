@@ -20,7 +20,7 @@ export function ChatMessage({ message, index, onMessageComplete, onConfirm }: Ch
       <div
         className={cn(
           'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center overflow-hidden',
-          isUser ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-white'
+          isUser ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-transparent'
         )}
       >
         {isUser ? (
