@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Message } from './types/chat';
 import { Sidebar } from './components/layout/Sidebar';
-import { ChatList } from './components/chat/ChatList';
+import { ChatMessage } from './components/chat/ChatMessage';
 import { ChatInput } from './components/chat/ChatInput';
 
 // Mock 的 assistant 回复数据
