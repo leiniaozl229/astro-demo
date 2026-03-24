@@ -12,7 +12,7 @@ export default function App() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [mockResponses, setMockResponses] = useState<Omit<Message, 'isStreaming'>[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const currentMessageIndexRef = useRef<number>(-1);
+  const streamingMessageIndexRef = useRef<number>(-1);
 
   // 加载 mock 数据
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function App() {
   const handleStreamComplete = () => {
     setMessages((prev) => {
       const newMessages = [...prev];
-      const idx = currentMessageIndexRef.current;
+      const idx = streamingMessageIndexRef.current;
       if (idx >= 0 && newMessages[idx]) {
         newMessages[idx] = { ...newMessages[idx], isStreaming: false };
       }
@@ -33,16 +33,17 @@ export default function App() {
     });
     setIsStreaming(false);
     setCurrentResponseIndex((prev) => prev + 1);
+    streamingMessageIndexRef.current = -1;
   };
 
   const { displayContent, isStreaming: hookStreaming, startStream } = useStreaming(handleStreamComplete);
 
   // 监听流式内容变化，更新消息
   useEffect(() => {
-    if (displayContent && currentMessageIndexRef.current >= 0) {
+    if (displayContent && streamingMessageIndexRef.current >= 0) {
       setMessages((prev) => {
         const newMessages = [...prev];
-        const idx = currentMessageIndexRef.current;
+        const idx = streamingMessageIndexRef.current;
         if (newMessages[idx]) {
           newMessages[idx] = { ...newMessages[idx], content: displayContent, isStreaming: true };
         }
@@ -63,28 +64,30 @@ export default function App() {
   const handleSendMessage = (userInput: string) => {
     if (!userInput.trim() || isStreaming) return;
 
-    // 添加用户消息
-    const userMessage: Message = {
-      role: 'user',
-      content: userInput,
-    };
-
     // 获取当前应该使用的回复
     const responseIndex = currentResponseIndex;
     const response = mockResponses[responseIndex % mockResponses.length];
 
     // 立即添加用户消息和 assistant 消息（一次性更新，避免多次渲染）
     setMessages((prev) => {
-      const newMessageIndex = prev.length;
-      currentMessageIndexRef.current = newMessageIndex;
+      const userMessage: Message = {
+        role: 'user',
+        content: userInput,
+      };
+      const assistantMessage: Message = {
+        ...response,
+        isStreaming: true,
+        content: '',
+      } as Message;
+
+      // 用户消息索引 = prev.length
+      // assistant 消息索引 = prev.length + 1
+      streamingMessageIndexRef.current = prev.length + 1;
+
       return [
         ...prev,
         userMessage,
-        {
-          ...response,
-          isStreaming: true,
-          content: '',
-        } as Message,
+        assistantMessage,
       ];
     });
 
