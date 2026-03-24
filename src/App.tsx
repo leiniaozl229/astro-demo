@@ -69,24 +69,26 @@ export default function App() {
       content: userInput,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setIsStreaming(true);
-
     // 获取当前应该使用的回复
     const responseIndex = currentResponseIndex;
     const response = mockResponses[responseIndex % mockResponses.length];
-    const newMessageIndex = messages.length;
-    currentMessageIndexRef.current = newMessageIndex;
 
-    // 立即添加空的 assistant 消息
-    setMessages((prev) => [
-      ...prev,
-      {
-        ...response,
-        isStreaming: true,
-        content: '',
-      },
-    ]);
+    // 立即添加用户消息和 assistant 消息（一次性更新，避免多次渲染）
+    setMessages((prev) => {
+      const newMessageIndex = prev.length;
+      currentMessageIndexRef.current = newMessageIndex;
+      return [
+        ...prev,
+        userMessage,
+        {
+          ...response,
+          isStreaming: true,
+          content: '',
+        } as Message,
+      ];
+    });
+
+    setIsStreaming(true);
 
     // 使用 useStreaming hook 开始流式输出
     startStream(response.content);

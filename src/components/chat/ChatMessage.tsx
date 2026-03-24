@@ -79,7 +79,8 @@ export const ChatMessage = React.memo(function ChatMessage({ message, index, onM
     </div>
   );
 }, (prevProps, nextProps) => {
-  // 只有当消息内容变化或流式状态变化时才重新渲染
+  // 只有当消息内容、流式状态或角色变化时才重新渲染
   return prevProps.message.content === nextProps.message.content &&
-    prevProps.message.isStreaming === nextProps.message.isStreaming;
+    prevProps.message.isStreaming === nextProps.message.isStreaming &&
+    prevProps.message.role === nextProps.message.role;
 });
