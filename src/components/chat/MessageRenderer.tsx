@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { AgentStep } from './AgentStep';
@@ -72,6 +73,7 @@ export function MessageRenderer({ content, onConfirm }: MessageRendererProps) {
       {text && (
         <div className="prose prose-sm max-w-none">
           <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
             components={{
               code({ node, inline, className, children, ...props }) {
                 const match = /language-(\w+)/.exec(className || '');
@@ -81,8 +83,8 @@ export function MessageRenderer({ content, onConfirm }: MessageRendererProps) {
 
                 if (!inline && language === 'sql') {
                   return (
-                    <div className="my-3 rounded-xl overflow-hidden border border-gray-200">
-                      <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200">
+                    <div className="my-3">
+                      <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border border-gray-200 border-b-0 rounded-t-lg">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-medium text-gray-500">SQL</span>
                         </div>
@@ -97,15 +99,18 @@ export function MessageRenderer({ content, onConfirm }: MessageRendererProps) {
                           )}
                         </button>
                       </div>
-                      <SyntaxHighlighter
-                        language={language}
-                        style={oneLight}
-                        customStyle={{ margin: 0, borderRadius: 0, background: '#ffffff', padding: '16px' }}
-                        showLineNumbers
-                        {...props}
-                      >
-                        {codeContent}
-                      </SyntaxHighlighter>
+                      <div className="border border-gray-200 border-t-0 rounded-b-lg bg-white">
+                        <SyntaxHighlighter
+                          language={language}
+                          style={oneLight as any}
+                          customStyle={{ background: 'transparent', padding: '16px', fontSize: '12px' } as any}
+                          showLineNumbers={true}
+                          wrapLines
+                          lineNumberStyle={{ color: '#9ca3af', fontSize: '12px', paddingRight: '12px' }}
+                        >
+                          {codeContent}
+                        </SyntaxHighlighter>
+                      </div>
                     </div>
                   );
                 }
@@ -154,7 +159,7 @@ export function MessageRenderer({ content, onConfirm }: MessageRendererProps) {
               },
               table({ children }) {
                 return (
-                  <div className="my-4 overflow-x-auto rounded-lg border border-gray-200">
+                  <div className="overflow-x-auto border border-gray-200 rounded-lg">
                     <table className="min-w-full border-collapse">
                       {children}
                     </table>
@@ -162,18 +167,18 @@ export function MessageRenderer({ content, onConfirm }: MessageRendererProps) {
                 );
               },
               thead({ children }) {
-                return <thead className="bg-gray-50">{children}</thead>;
+                return <thead className="bg-gray-50 border-b border-gray-200">{children}</thead>;
               },
               th({ children }) {
                 return (
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b border-gray-200">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b border-gray-200 border-r last:border-r-0">
                     {children}
                   </th>
                 );
               },
               td({ children }) {
                 return (
-                  <td className="px-4 py-2.5 text-sm text-gray-700 border-b border-gray-100 last:border-b-0 whitespace-nowrap">
+                  <td className="px-4 py-2.5 text-sm text-gray-700 border-b border-gray-100 border-r last:border-r-0 whitespace-nowrap">
                     {children}
                   </td>
                 );
