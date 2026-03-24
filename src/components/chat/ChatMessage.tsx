@@ -1,7 +1,8 @@
 import { Message } from '../types/chat';
-import { Cpu, User, ThumbsUp, ThumbsDown, RotateCcw, Copy } from 'lucide-react';
+import { User, ThumbsUp, ThumbsDown, RotateCcw, Copy } from 'lucide-react';
 import { MessageRenderer } from './MessageRenderer';
 import { cn } from '../../utils/cn';
+import astroLogo from '../../assets/astro-logo.svg';
 
 interface ChatMessageProps {
   message: Message;
@@ -18,14 +19,14 @@ export function ChatMessage({ message, index, onMessageComplete, onConfirm }: Ch
       {/* 头像 */}
       <div
         className={cn(
-          'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
-          isUser ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-gradient-to-br from-purple-500 to-blue-500'
+          'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center overflow-hidden',
+          isUser ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-white'
         )}
       >
         {isUser ? (
           <User className="w-4 h-4 text-white" />
         ) : (
-          <Cpu className="w-4 h-4 text-white" />
+          <img src={astroLogo} alt="Astro" className="w-full h-full" />
         )}
       </div>
 

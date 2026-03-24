@@ -34,12 +34,12 @@ export function ChatInput({ disabled = false, onSend }: ChatInputProps) {
             placeholder="你有数据问题，我有专业解法"
             disabled={disabled}
             rows={3}
-            className="w-full bg-transparent border-none outline-none resize-none text-sm text-gray-700 placeholder-gray-400"
-            style={{ minHeight: '120px' }}
+            className="w-full h-12 bg-transparent border-none outline-none resize-none text-sm text-gray-700 placeholder-gray-400"
+            // style={{ minHeight: '120px' }}
           />
 
           {/* 底部工具栏 */}
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
+          <div className="flex items-center justify-between border-t border-gray-50">
             {/* 左侧标签按钮 */}
             <div className="flex items-center gap-2">
               <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-full text-xs font-medium transition-colors">

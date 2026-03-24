@@ -1,5 +1,6 @@
 import { MessageSquare, Plus, Home, MessageCircle, Brain, LayoutGrid, Star, ChevronRight, Settings, Send } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import astroLogo from '../../assets/astro-logo.svg';
 
 const MENU_ITEMS = [
   { icon: Home, label: '首页', path: '/' },
@@ -32,9 +33,7 @@ export function Sidebar() {
       {/* 顶部 Logo 区域 */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">A</span>
-          </div>
+          <img src={astroLogo} alt="Astro" className="w-8 h-8" />
           <span className="text-lg font-semibold text-gray-800">Astro</span>
         </div>
       </div>
