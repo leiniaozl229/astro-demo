@@ -1,8 +1,9 @@
-import React from 'react';
-import { Message } from '../types/chat';
+import React, { useEffect } from 'react';
 import { User, ThumbsUp, ThumbsDown, RotateCcw, Copy } from 'lucide-react';
+import { Message } from '../types/chat';
 import { MessageRenderer } from './MessageRenderer';
 import { cn } from '../../utils/cn';
+import { useStreaming } from '../../hooks/useStreaming';
 import astroLogo from '../../assets/astro-logo.svg';
 
 interface ChatMessageProps {
@@ -12,8 +13,32 @@ interface ChatMessageProps {
   onConfirm?: () => void;
 }
 
-export const ChatMessage = React.memo(function ChatMessage({ message, index, onMessageComplete, onConfirm }: ChatMessageProps) {
+export function ChatMessage({ message, index, onMessageComplete, onConfirm }: ChatMessageProps) {
   const isUser = message.role === 'user';
+
+  // 每条消息自己管理自己的流式状态
+  const { displayContent, isStreaming, startStream } = useStreaming(onMessageComplete);
+
+  // 当消息内容变化时（新消息创建），启动流式
+  useEffect(() => {
+    console.log('[ChatMessage] useEffect triggered', {
+      isUser,
+      content: message.content?.substring(0, 20),
+      isStreaming: message.isStreaming
+    });
+    if (!isUser && message.content && message.isStreaming) {
+      console.log('[ChatMessage] Starting stream...');
+      startStream(message.content);
+    }
+  }, [message.content, message.isStreaming, isUser, startStream]);
+
+  // 流式期间使用 displayContent，完成后使用完整 content
+  const displayText = isStreaming ? displayContent : message.content;
+
+  // 如果正在流式但还没有内容，不渲染
+  if (!isUser && message.isStreaming && isStreaming && !displayContent) {
+    return null;
+  }
 
   return (
     <div className={cn('flex gap-4', isUser ? 'flex-row-reverse' : 'flex-row')}>
@@ -53,13 +78,13 @@ export const ChatMessage = React.memo(function ChatMessage({ message, index, onM
             <p className="text-sm text-gray-800">{message.content}</p>
           ) : (
             <div className="text-sm text-gray-700">
-              <MessageRenderer content={message.content} onConfirm={onConfirm} isStreaming={message.isStreaming} />
+              <MessageRenderer content={displayText} onConfirm={onConfirm} isStreaming={isStreaming} />
             </div>
           )}
         </div>
 
-        {/* 操作按钮 */}
-        {!isUser && !message.isStreaming && (
+        {/* 操作按钮 - 只在流式完成后显示 */}
+        {!isUser && !isStreaming && (
           <div className="flex items-center gap-1">
             <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors">
               <ThumbsUp className="w-3.5 h-3.5" />
@@ -78,15 +103,4 @@ export const ChatMessage = React.memo(function ChatMessage({ message, index, onM
       </div>
     </div>
   );
-}, (prevProps, nextProps) => {
-  // 只有当以下任一条件变化时才重新渲染：
-  // 1. 消息角色变化（用户 vs 智能体）
-  // 2. 内容变化（流式输出期间）
-  // 3. isStreaming 状态变化（用于显示/隐藏操作按钮）
-  return (
-    prevProps.message.role === nextProps.message.role &&
-    prevProps.message.content === nextProps.message.content &&
-    prevProps.message.isStreaming === nextProps.message.isStreaming &&
-    prevProps.onConfirm === nextProps.onConfirm
-  );
-});
+}

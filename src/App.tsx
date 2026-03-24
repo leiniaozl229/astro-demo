@@ -1,18 +1,17 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Message } from './types/chat';
 import { Sidebar } from './components/layout/Sidebar';
 import { ChatMessage } from './components/chat/ChatMessage';
 import { ChatInput } from './components/chat/ChatInput';
-import { loadAllMockResponses, MockResponse } from './mock/mockLoader';
-import { useStreaming } from './hooks/useStreaming';
+import { loadAllMockResponses } from './mock/mockLoader';
+import { cn } from './utils/cn';
 
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentResponseIndex, setCurrentResponseIndex] = useState(0);
-  const [isStreaming, setIsStreaming] = useState(false);
   const [mockResponses, setMockResponses] = useState<Omit<Message, 'isStreaming'>[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const streamingMessageIndexRef = useRef<number>(-1);
 
   // 加载 mock 数据
   useEffect(() => {
@@ -21,87 +20,52 @@ export default function App() {
     });
   }, []);
 
-  // 流式输出完成回调
-  const handleStreamComplete = () => {
-    setMessages((prev) => {
-      const newMessages = [...prev];
-      const idx = streamingMessageIndexRef.current;
-      if (idx >= 0 && newMessages[idx]) {
-        newMessages[idx] = { ...newMessages[idx], isStreaming: false };
-      }
-      return newMessages;
-    });
-    setIsStreaming(false);
-    setCurrentResponseIndex((prev) => prev + 1);
-    streamingMessageIndexRef.current = -1;
-  };
-
-  const { displayContent, isStreaming: hookStreaming, startStream } = useStreaming(handleStreamComplete);
-
-  // 监听流式内容变化，更新消息
+  // 监听消息变化，更新 streaming 状态
   useEffect(() => {
-    if (displayContent && streamingMessageIndexRef.current >= 0) {
-      setMessages((prev) => {
-        const newMessages = [...prev];
-        const idx = streamingMessageIndexRef.current;
-        if (newMessages[idx]) {
-          newMessages[idx] = { ...newMessages[idx], content: displayContent, isStreaming: true };
-        }
-        return newMessages;
-      });
-    }
-  }, [displayContent]);
+    const hasStreaming = messages.some(m => m.isStreaming);
+    setIsStreaming(hasStreaming);
+  }, [messages]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, displayContent]);
+  }, [messages]);
+
+  // 流式完成回调
+  const handleStreamComplete = useCallback(() => {
+    setMessages((prev) => {
+      const newMessages = prev.map(m =>
+        m.isStreaming ? { ...m, isStreaming: false } : m
+      );
+      return newMessages;
+    });
+  }, []);
 
   // 发送用户消息并触发 assistant 回复
   const handleSendMessage = (userInput: string) => {
     if (!userInput.trim() || isStreaming) return;
 
     // 获取当前应该使用的回复
-    const responseIndex = currentResponseIndex;
-    const response = mockResponses[responseIndex % mockResponses.length];
+    const response = mockResponses[currentResponseIndex % mockResponses.length];
 
-    // 立即添加用户消息和 assistant 消息（一次性更新，避免多次渲染）
-    setMessages((prev) => {
-      const userMessage: Message = {
-        role: 'user',
-        content: userInput,
-      };
-      const assistantMessage: Message = {
-        ...response,
-        isStreaming: true,
-        content: '',
-      } as Message;
+    // 添加用户消息和 assistant 消息
+    setMessages((prev) => [
+      ...prev,
+      { role: 'user' as const, content: userInput },
+      { ...response, isStreaming: true },
+    ]);
 
-      // 用户消息索引 = prev.length
-      // assistant 消息索引 = prev.length + 1
-      streamingMessageIndexRef.current = prev.length + 1;
-
-      return [
-        ...prev,
-        userMessage,
-        assistantMessage,
-      ];
-    });
-
-    setIsStreaming(true);
-
-    // 使用 useStreaming hook 开始流式输出
-    startStream(response.content);
+    setCurrentResponseIndex((prev) => prev + 1);
   };
 
   // 确认执行按钮处理
-  const handleConfirm = () => {
+  const handleConfirm = useCallback(() => {
     if (isStreaming) return;
     handleSendMessage('确认执行数据资产建设方案');
-  };
+  }, [isStreaming, handleSendMessage]);
 
   return (
     <div className="h-screen flex bg-[#f5f7fa]">
@@ -119,6 +83,7 @@ export default function App() {
                 key={index}
                 message={message}
                 index={index}
+                onMessageComplete={handleStreamComplete}
                 onConfirm={handleConfirm}
               />
             ))}

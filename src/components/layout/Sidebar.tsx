@@ -1,4 +1,4 @@
-import { MessageSquare, Plus, Home, MessageCircle, Brain, LayoutGrid, Star, ChevronRight, Settings, Send } from 'lucide-react';
+import { MessageSquare, Plus, Home, MessageCircle, Brain, LayoutGrid, Star, ChevronRight, Settings } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import astroLogo from '../../assets/astro-logo.svg';
 

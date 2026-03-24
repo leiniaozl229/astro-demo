@@ -66,26 +66,12 @@ function parseContent(content: string): ParsedData {
 
 export const MessageRenderer = React.memo(function MessageRenderer({ content, onConfirm, isStreaming = false }: MessageRendererProps) {
   const [copiedCodeIndex, setCopiedCodeIndex] = React.useState<number | null>(null);
-  const [renderedContent, setRenderedContent] = React.useState<React.ReactNode>(null);
 
   // 使用 useMemo 缓存解析结果
   const { steps, text, confirmText, requirementData } = React.useMemo(
     () => parseContent(content),
     [content]
   );
-
-  // 流式期间使用简化的纯文本渲染，避免昂贵的 Markdown 解析
-  React.useEffect(() => {
-    if (isStreaming) {
-      // 流式期间只渲染纯文本
-      setRenderedContent(
-        <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">{text}</div>
-      );
-    } else {
-      // 流式完成后渲染完整 Markdown
-      setRenderedContent(null); // 让下面的 JSX 重新计算
-    }
-  }, [isStreaming, text]);
 
   const handleCopyCode = (code: string, index: number) => {
     navigator.clipboard.writeText(code);
@@ -220,7 +206,7 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, on
 
   return (
     <div className="w-full space-y-3">
-      {/* 渲染步骤条 */}
+      {/* 渲染步骤条 - 流式期间也渲染 */}
       {steps.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {steps.map((step, index) => (
@@ -229,30 +215,12 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, on
         </div>
       )}
 
-      {/* 渲染需求确认卡片 */}
+      {/* 渲染需求确认卡片 - 流式期间也渲染 */}
       {requirementData && requirementData.length > 0 && (
         <RequirementCard tabs={requirementData} onConfirm={onConfirm} onCancel={onConfirm} />
       )}
 
-      {/* 渲染内容：流式期间使用纯文本，完成后使用 Markdown */}
-      {text && (
-        <div className="prose prose-sm max-w-none">
-          {isStreaming && renderedContent ? (
-            // 流式期间：纯文本渲染（高性能）
-            renderedContent
-          ) : (
-            // 流式完成后：完整 Markdown 渲染
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={markdownComponents}
-            >
-              {text}
-            </ReactMarkdown>
-          )}
-        </div>
-      )}
-
-      {/* 渲染确认按钮 */}
+      {/* 渲染确认按钮 - 流式期间也渲染 */}
       {confirmText && (
         <div className="flex justify-end mt-4">
           <button
@@ -261,6 +229,18 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, on
           >
             {confirmText}
           </button>
+        </div>
+      )}
+
+      {/* 渲染内容：流式期间也使用 Markdown，但简化渲染 */}
+      {text && (
+        <div className="prose prose-sm max-w-none">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={markdownComponents}
+          >
+            {text}
+          </ReactMarkdown>
         </div>
       )}
     </div>

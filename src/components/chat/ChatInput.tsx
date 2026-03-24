@@ -35,7 +35,6 @@ export function ChatInput({ disabled = false, onSend }: ChatInputProps) {
             disabled={disabled}
             rows={3}
             className="w-full h-12 bg-transparent border-none outline-none resize-none text-sm text-gray-700 placeholder-gray-400"
-            // style={{ minHeight: '120px' }}
           />
 
           {/* 底部工具栏 */}
@@ -65,7 +64,7 @@ export function ChatInput({ disabled = false, onSend }: ChatInputProps) {
               <button
                 onClick={handleSend}
                 disabled={disabled || !input.trim()}
-                className="p-2 bg-blue-100 hover:bg-blue-200 disabled:bg-gray-100 text-blue-600 disabled:text-gray-300 rounded-full transition-colors"
+                className="p-2 bg-blue-100 hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-300 text-blue-600 rounded-full transition-colors"
               >
                 <Send className="w-5 h-5" />
               </button>
