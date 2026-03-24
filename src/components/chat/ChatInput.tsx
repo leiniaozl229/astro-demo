@@ -35,7 +35,7 @@ export function ChatInput({ disabled = false, onSend }: ChatInputProps) {
             disabled={disabled}
             rows={3}
             className="w-full bg-transparent border-none outline-none resize-none text-sm text-gray-700 placeholder-gray-400"
-            style={{ minHeight: '60px' }}
+            style={{ minHeight: '120px' }}
           />
 
           {/* 底部工具栏 */}
