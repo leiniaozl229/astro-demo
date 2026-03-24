@@ -90,8 +90,6 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, on
       const currentIndex = codeBlockIndex++;
 
       if (!inline && language === 'sql') {
-        const isComplete = !isStreaming || codeContent.includes('```') || codeContent.length > 500;
-
         return (
           <div className="my-3">
             <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border border-gray-200 border-b-0 rounded-t-lg">
@@ -110,22 +108,16 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, on
               </button>
             </div>
             <div className="border border-gray-200 border-t-0 rounded-b-lg bg-white">
-              {isComplete ? (
-                <SyntaxHighlighter
-                  language={language}
-                  style={oneLight as any}
-                  customStyle={{ background: 'transparent', padding: '16px', fontSize: '12px' } as any}
-                  showLineNumbers={true}
-                  wrapLines
-                  lineNumberStyle={{ color: '#9ca3af', fontSize: '12px', paddingRight: '12px' }}
-                >
-                  {codeContent}
-                </SyntaxHighlighter>
-              ) : (
-                <div className="p-4 font-mono text-sm text-gray-600 whitespace-pre">
-                  {codeContent}
-                </div>
-              )}
+              <SyntaxHighlighter
+                language={language}
+                style={oneLight as any}
+                customStyle={{ background: 'transparent', padding: '16px', fontSize: '12px' } as any}
+                showLineNumbers={true}
+                wrapLines
+                lineNumberStyle={{ color: '#9ca3af', fontSize: '12px', paddingRight: '12px' }}
+              >
+                {codeContent}
+              </SyntaxHighlighter>
             </div>
           </div>
         );
