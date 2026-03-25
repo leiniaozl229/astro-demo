@@ -109,10 +109,10 @@ const SqlCodeBlock = memo(function SqlCodeBlock({ code, index, copiedCodeIndex, 
           <SyntaxHighlighter
             language="sql"
             style={oneLight as any}
-            customStyle={{ background: 'transparent', padding: '16px', fontSize: '12px' } as any}
+            customStyle={{ background: 'transparent', padding: '16px 20px', fontSize: '12px' } as any}
             showLineNumbers={true}
             wrapLines
-            lineNumberStyle={{ color: '#9ca3af', fontSize: '12px', paddingRight: '12px' }}
+            lineNumberStyle={{ color: '#9ca3af', fontSize: '12px', paddingRight: '16px', minWidth: '35px' }}
           >
             {code}
           </SyntaxHighlighter>
