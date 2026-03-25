@@ -43,8 +43,8 @@ export const useStreaming = (onFinished?: () => void): UseStreamingReturn => {
   const onFinishedRef = useRef(onFinished);
   onFinishedRef.current = onFinished;
 
-  const chunkSize = 3; // 每次追加的字符数 - 减小使流式更平滑
-  const interval = 30; // 节流频率（毫秒）- 30ms 是肉眼舒适的极限，约 33FPS
+  const chunkSize = 2; // 每次追加的字符数 - 减小使流式更平滑
+  const interval = 50; // 节流频率（毫秒）- 稍慢的速度让打字效果更清晰
 
   const stopStream = useCallback(() => {
     if (timerRef.current) {
