@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Send, Paperclip, Box } from 'lucide-react';
 
 interface ChatInputProps {
@@ -8,11 +8,24 @@ interface ChatInputProps {
 
 export function ChatInput({ disabled = false, onSend }: ChatInputProps) {
   const [input, setInput] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const prevDisabledRef = useRef(disabled);
+
+  // 流式输出结束后，恢复焦点到输入框
+  useEffect(() => {
+    // 从 disabled=true 变为 disabled=false 时，恢复焦点
+    if (prevDisabledRef.current && !disabled && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+    prevDisabledRef.current = disabled;
+  }, [disabled]);
 
   const handleSend = () => {
     if (!input.trim() || disabled) return;
     onSend?.(input);
     setInput('');
+    // 发送后保持焦点
+    textareaRef.current?.focus();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -28,6 +41,7 @@ export function ChatInput({ disabled = false, onSend }: ChatInputProps) {
         {/* 卡片式输入框 */}
         <div className="relative bg-white rounded-[20px] border border-blue-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
           <textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
