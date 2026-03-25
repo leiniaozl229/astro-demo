@@ -83,17 +83,15 @@ export default function App() {
       );
 
       // 检查是否需要在流式完成后自动触发下一条回复
-      // 逻辑：当第 1 条 assistant 消息（索引 1，因为索引 0 是用户消息）流式完成后，自动触发第 2 条
+      // 逻辑：当第 1 条 assistant 消息流式完成后，直接追加第 2 条 assistant 消息（不插入用户消息）
       const lastMessage = newMessages[newMessages.length - 1];
 
       // 检查是否是第 1 轮对话的 assistant 消息（total=2 时说明是第 1 轮）
-      // 并且这条消息是刚完成流式的 assistant 消息
       if (newMessages.length === 2 && lastMessage.role === 'assistant' && !lastMessage.isStreaming) {
-        // 延迟 500ms 后自动触发下一条
+        // 延迟 500ms 后直接追加第 2 条 assistant 消息
         setTimeout(() => {
           setMessages((prev) => [
             ...prev,
-            { role: 'user' as const, content: '好的，请继续' },
             { ...mockResponses[1 % mockResponses.length], isStreaming: true },
           ]);
           setCurrentResponseIndex((prev) => prev + 1);
