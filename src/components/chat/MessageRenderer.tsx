@@ -84,9 +84,8 @@ const SqlCodeBlock = memo(function SqlCodeBlock({ code, index, copiedCodeIndex, 
 
   const isCurrentCopied = copiedCodeIndex === index || localCopied;
 
-  // 流式期间：如果代码块未完成（没有结束标记），使用简化的 pre 渲染
-  // 这样可以避免 SyntaxHighlighter 频繁解析不完整的代码
-  const shouldUseHighlighter = !isStreaming || code.trim().endsWith('```') || code.length < 10 || !code.includes('\n');
+  // 流式期间：始终使用 SyntaxHighlighter 高亮
+  const shouldUseHighlighter = true;
 
   return (
     <div className="my-3">
@@ -302,19 +301,28 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
           </li>
         );
       },
+      table({ children }: { children?: React.ReactNode }) {
+        return (
+          <div className="overflow-x-auto my-3">
+            <table className="min-w-full border border-gray-200 text-sm">
+              {children}
+            </table>
+          </div>
+        );
+      },
       thead({ children }: { children?: React.ReactNode }) {
-        return <thead className="bg-gray-50 border-b border-gray-200">{children}</thead>;
+        return <thead className="bg-gray-50">{children}</thead>;
       },
       th({ children }: { children?: React.ReactNode }) {
         return (
-          <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b border-gray-200 border-r last:border-r-0">
+          <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border border-gray-200">
             {children}
           </th>
         );
       },
       td({ children }: { children?: React.ReactNode }) {
         return (
-          <td className="px-4 py-2.5 text-sm text-gray-700 border-b border-gray-100 border-r last:border-r-0 whitespace-nowrap">
+          <td className="px-4 py-2.5 text-sm text-gray-700 border border-gray-200">
             {children}
           </td>
         );
@@ -341,10 +349,6 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
           >
             {text}
           </ReactMarkdown>
-          {/* 流式光标 - 增强"AI 正在思考"的代入感 */}
-          {isStreaming && (
-            <span className="inline-block w-1.5 h-4 ml-1 bg-blue-500 animate-pulse align-middle" />
-          )}
         </div>
       )}
     </div>
