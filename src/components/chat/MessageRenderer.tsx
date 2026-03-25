@@ -164,6 +164,37 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
     let codeBlockIndex = 0;
 
     return {
+      // 自定义 table 组件，用于拦截被错误解析为表格的 STEP 标记
+      table({ children, ...props }: any) {
+        const childrenStr = JSON.stringify(children);
+
+        // 检查是否包含 STEP 标记
+        const stepMatch = childrenStr.match(/\[STEP: ([^\]]+)\]/);
+        if (stepMatch) {
+          const fullMatch = stepMatch[0];
+          const innerMatch = fullMatch.match(/\[STEP: ([^\\]|]+)(?:\s*\\?\|\s*(success|loading|pending))?\]/);
+          const stepTitle = innerMatch ? innerMatch[1].trim() : stepMatch[1].trim();
+          const originalStatus = innerMatch ? innerMatch[2] as 'success' | 'loading' | 'pending' | undefined : undefined;
+
+          // 无状态的 STEP 显示为 pending（灰色），有状态的根据 completedSteps 判断
+          let stepStatus: 'success' | 'loading' | 'pending' = 'pending';
+          if (originalStatus) {
+            const isStepCompleted = completedSteps?.has(stepTitle);
+            stepStatus = isStepCompleted ? 'success' : originalStatus;
+          }
+
+          return <AgentStep title={stepTitle} status={stepStatus} />;
+        }
+
+        // 普通表格
+        return (
+          <div className="overflow-x-auto border border-gray-200 rounded-lg">
+            <table className="min-w-full border-collapse">
+              {children}
+            </table>
+          </div>
+        );
+      },
       // 自定义 p 组件，用于拦截包含 STEP 标记的段落
       p({ children, ...props }: any) {
         const childStr = String(children || '');
@@ -188,10 +219,13 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
         }
 
         // 检查是否包含 STEP 标记（支持有状态和无状态两种格式）
-        const stepMatch = childStr.match(/\[STEP: ([^\]|]+)(?:\s*\|\s*(success|loading|pending))?\]/);
+        const stepMatch = childStr.match(/\[STEP: ([^\]]+)\]/);
         if (stepMatch) {
-          const stepTitle = stepMatch[1].trim();
-          const originalStatus = stepMatch[2] as 'success' | 'loading' | 'pending' | undefined;
+          const fullMatch = stepMatch[0];
+          // 从完整匹配中提取标题和状态（支持转义和未转义的 |）
+          const innerMatch = fullMatch.match(/\[STEP: ([^\\]|]+)(?:\s*\\?\|\s*(success|loading|pending))?\]/);
+          const stepTitle = innerMatch ? innerMatch[1].trim() : stepMatch[1].trim();
+          const originalStatus = innerMatch ? innerMatch[2] as 'success' | 'loading' | 'pending' | undefined : undefined;
 
           // 无状态的 STEP 显示为 pending（灰色），有状态的根据 completedSteps 判断
           let stepStatus: 'success' | 'loading' | 'pending' = 'pending';
@@ -200,8 +234,8 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
             stepStatus = isStepCompleted ? 'success' : originalStatus;
           }
 
-          // 提取 STEP 标记前后的文本
-          const parts = childStr.split(/\[STEP: [^\]|]+(?:\s*\|\s*(success|loading|pending))?\]/);
+          // 使用与上面相同的正则来分割文本
+          const parts = childStr.split(/\[STEP: [^\]]+\]/);
           const beforeText = parts[0]?.trim();
           const afterText = parts[1]?.trim() || '';
 
@@ -268,15 +302,6 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
           <li className="text-gray-700">
             {children}
           </li>
-        );
-      },
-      table({ children }: { children?: React.ReactNode }) {
-        return (
-          <div className="overflow-x-auto border border-gray-200 rounded-lg">
-            <table className="min-w-full border-collapse">
-              {children}
-            </table>
-          </div>
         );
       },
       thead({ children }: { children?: React.ReactNode }) {
