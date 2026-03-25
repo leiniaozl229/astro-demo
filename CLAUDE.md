@@ -31,8 +31,6 @@ src/
 │   └── chat.ts                 # 消息类型定义
 ├── utils/
 │   └── cn.ts                   # 样式工具
-├── data/
-│   └── mockData.ts             # 内置 Mock 数据
 ├── App.tsx                     # 主应用入口
 └── main.tsx
 public/
@@ -41,6 +39,19 @@ public/
     ├── 2-dau-discovery.md      # 数据资产发现
     ├── 3-dau-codegen.md        # SQL 代码生成
     └── 4-requirement-confirm.md
+docs/
+└── STREAMING.md                # 流式输出渲染逻辑详解
+```
+
+## Mock 数据加载
+Mock 文件位于 `public/mock/*.md`，通过 `mockLoader.ts` 动态加载：
+```typescript
+// App.tsx
+useEffect(() => {
+  loadAllMockResponses().then((responses) => {
+    setMockResponses(responses as Omit<Message, 'isStreaming'>[]);
+  });
+}, []);
 ```
 
 ## 核心组件说明
@@ -105,6 +116,8 @@ content:
 [CONFIRM: 确认执行]
 ```
 
+**加载逻辑**：`mockLoader.ts` 解析 md 文件，提取 role 和 content 字段
+
 ## 依赖
 ```json
 {
@@ -125,6 +138,7 @@ npm run preview  # 预览生产构建
 ```
 
 ## 最近修改
+- 删除废弃的 `src/data/mockData.ts`（改用 public/mock/*.md 动态加载）
 - 移除 STEP 标记中的 `| status` 显示（防止 markdown 解析为表格）
 - 表格添加完整边框
 - SQL 代码块始终高亮（移除流式期间简化渲染）
