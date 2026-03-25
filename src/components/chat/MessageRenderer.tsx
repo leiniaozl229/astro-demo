@@ -168,14 +168,35 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
       p({ children, ...props }: any) {
         const childStr = String(children || '');
 
+        // 检查是否包含 CONFIRM 标记
+        const confirmMatch = childStr.match(/\[CONFIRM: ([^\]]+)\]/);
+        if (confirmMatch) {
+          const confirmText = confirmMatch[1].trim();
+          const beforeText = childStr.replace(/\[CONFIRM: [^\]]+\]/, '').trim();
+
+          return (
+            <div className="my-2">
+              {beforeText && <p className="text-gray-700 leading-relaxed mb-2">{beforeText}</p>}
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={onConfirm}
+                  className="px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
+                >
+                  {confirmText}
+                </button>
+              </div>
+            </div>
+          );
+        }
+
         // 检查是否包含 STEP 标记（支持有状态和无状态两种格式）
         const stepMatch = childStr.match(/\[STEP: ([^\]|]+)(?:\s*\|\s*(success|loading|pending))?\]/);
         if (stepMatch) {
           const stepTitle = stepMatch[1].trim();
           const originalStatus = stepMatch[2] as 'success' | 'loading' | 'pending' | undefined;
 
-          // 无状态的 STEP 直接显示 success，有状态的根据 completedSteps 判断
-          let stepStatus: 'success' | 'loading' | 'pending' = 'success';
+          // 无状态的 STEP 显示为 pending（灰色），有状态的根据 completedSteps 判断
+          let stepStatus: 'success' | 'loading' | 'pending' = 'pending';
           if (originalStatus) {
             const isStepCompleted = completedSteps?.has(stepTitle);
             stepStatus = isStepCompleted ? 'success' : originalStatus;
@@ -281,25 +302,13 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
         return <tr className="hover:bg-gray-50 last:border-b-0">{children}</tr>;
       },
     };
-  }, [copiedCodeIndex, handleCopyCode, isStreaming, completedSteps]);
+  }, [copiedCodeIndex, handleCopyCode, isStreaming, completedSteps, onConfirm]);
 
   return (
     <div className="w-full space-y-3">
       {/* 渲染需求确认卡片 - 流式期间也渲染 */}
       {requirementData && requirementData.length > 0 && (
         <RequirementCard tabs={requirementData} onConfirm={onConfirm} onCancel={onConfirm} />
-      )}
-
-      {/* 渲染确认按钮 - 流式期间也渲染 */}
-      {confirmText && (
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={onConfirm}
-            className="px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
-          >
-            {confirmText}
-          </button>
-        </div>
       )}
 
       {/* 渲染内容：流式期间也使用 Markdown，但简化渲染 */}
