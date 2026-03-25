@@ -22,34 +22,36 @@ interface ParsedData {
   requirementData: Tab[] | null;
 }
 
-// 解析 [STEP: 标题 | 状态] 语法，返回步骤和剩余文本
+// 解析 [STEP: 标题 | 状态] 语法，返回步骤和清理后的文本
 // 支持两种格式：[STEP: 标题 | 状态] 和 [STEP: 标题]（无状态）
 function parseContent(content: string, convertLoadingToSuccess: boolean = false): ParsedData {
   const steps: { title: string; status: 'success' | 'loading' | 'pending' | null }[] = [];
   let confirmText: string | null = null;
   let requirementData: Tab[] | null = null;
 
-  // 提取 STEP 标记（用于内部追踪）- 支持有状态和无状态两种格式
+  // 提取 STEP 标记并记录状态，同时清理文本
   const stepRegex = /\[STEP: ([^\]|]+)(?:\s*\|\s*(success|loading|pending))?\]/g;
   let match;
-  while ((match = stepRegex.exec(content)) !== null) {
-    const status = match[2] ? (match[2] as 'success' | 'loading' | 'pending') : null;
-    steps.push({
-      title: match[1].trim(),
-      status,
-    });
-  }
+  let text = content;
+
+  // 使用 replace 替代 exec+replace，确保替换所有匹配项
+  text = text.replace(stepRegex, (fullMatch, title, status) => {
+    steps.push({ title: title.trim(), status: status ? (status as 'success' | 'loading' | 'pending') : null });
+    // 将 [STEP: 标题 | 状态] 替换为 [STEP: 标题]，移除 | 状态部分
+    // 这样 markdown 不会将其解析为表格
+    return `[STEP: ${title.trim()}]`;
+  });
 
   // 提取 CONFIRM 标记
-  const confirmRegex = /\[CONFIRM: ([^\]]+)\]/;
-  const confirmMatch = confirmRegex.exec(content);
+  const confirmRegex = /\[CONFIRM: ([^\]]+)\]/g;
+  const confirmMatch = confirmRegex.exec(text);
   if (confirmMatch) {
     confirmText = confirmMatch[1].trim();
   }
 
   // 提取 REQUIREMENT 数据块
   const requirementRegex = /\[REQUIREMENT\]([\s\S]*?)\[\/REQUIREMENT\]/;
-  const requirementMatch = requirementRegex.exec(content);
+  const requirementMatch = requirementRegex.exec(text);
   if (requirementMatch) {
     try {
       requirementData = JSON.parse(requirementMatch[1].trim()) as Tab[];
@@ -57,9 +59,6 @@ function parseContent(content: string, convertLoadingToSuccess: boolean = false)
       console.error('Failed to parse requirement data:', e);
     }
   }
-
-  // 不再清理标记，保留在文本中让 markdown 组件渲染
-  let text = content;
 
   return { steps, text, confirmText, requirementData };
 }
@@ -164,37 +163,6 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
     let codeBlockIndex = 0;
 
     return {
-      // 自定义 table 组件，用于拦截被错误解析为表格的 STEP 标记
-      table({ children, ...props }: any) {
-        const childrenStr = JSON.stringify(children);
-
-        // 检查是否包含 STEP 标记
-        const stepMatch = childrenStr.match(/\[STEP: ([^\]]+)\]/);
-        if (stepMatch) {
-          const fullMatch = stepMatch[0];
-          const innerMatch = fullMatch.match(/\[STEP: ([^\\]|]+)(?:\s*\\?\|\s*(success|loading|pending))?\]/);
-          const stepTitle = innerMatch ? innerMatch[1].trim() : stepMatch[1].trim();
-          const originalStatus = innerMatch ? innerMatch[2] as 'success' | 'loading' | 'pending' | undefined : undefined;
-
-          // 无状态的 STEP 显示为 pending（灰色），有状态的根据 completedSteps 判断
-          let stepStatus: 'success' | 'loading' | 'pending' = 'pending';
-          if (originalStatus) {
-            const isStepCompleted = completedSteps?.has(stepTitle);
-            stepStatus = isStepCompleted ? 'success' : originalStatus;
-          }
-
-          return <AgentStep title={stepTitle} status={stepStatus} />;
-        }
-
-        // 普通表格
-        return (
-          <div className="overflow-x-auto border border-gray-200 rounded-lg">
-            <table className="min-w-full border-collapse">
-              {children}
-            </table>
-          </div>
-        );
-      },
       // 自定义 p 组件，用于拦截包含 STEP 标记的段落
       p({ children, ...props }: any) {
         const childStr = String(children || '');
@@ -218,14 +186,16 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
           );
         }
 
-        // 检查是否包含 STEP 标记（支持有状态和无状态两种格式）
+        // 检查是否包含 STEP 标记（已清理，没有 | 状态）
         const stepMatch = childStr.match(/\[STEP: ([^\]]+)\]/);
         if (stepMatch) {
           const fullMatch = stepMatch[0];
-          // 从完整匹配中提取标题和状态（支持转义和未转义的 |）
-          const innerMatch = fullMatch.match(/\[STEP: ([^\\]|]+)(?:\s*\\?\|\s*(success|loading|pending))?\]/);
-          const stepTitle = innerMatch ? innerMatch[1].trim() : stepMatch[1].trim();
-          const originalStatus = innerMatch ? innerMatch[2] as 'success' | 'loading' | 'pending' | undefined : undefined;
+          const stepTitle = stepMatch[1].trim();
+
+          // 从原始内容中查找这个 STEP 的状态
+          // 因为 parseContent 已经记录了 steps，我们需要找到对应的状态
+          const stepInfo = steps.find(s => s.title === stepTitle);
+          const originalStatus = stepInfo?.status;
 
           // 无状态的 STEP 显示为 pending（灰色），有状态的根据 completedSteps 判断
           let stepStatus: 'success' | 'loading' | 'pending' = 'pending';
@@ -234,7 +204,7 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
             stepStatus = isStepCompleted ? 'success' : originalStatus;
           }
 
-          // 使用与上面相同的正则来分割文本
+          // 使用相同的正则来分割文本
           const parts = childStr.split(/\[STEP: [^\]]+\]/);
           const beforeText = parts[0]?.trim();
           const afterText = parts[1]?.trim() || '';
@@ -298,6 +268,34 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
         );
       },
       li({ children }: { children?: React.ReactNode }) {
+        const childStr = String(children || '');
+
+        // 检查是否包含 STEP 标记
+        const stepMatch = childStr.match(/\[STEP: ([^\]]+)\]/);
+        if (stepMatch) {
+          const stepTitle = stepMatch[1].trim();
+          const stepInfo = steps.find(s => s.title === stepTitle);
+          const originalStatus = stepInfo?.status;
+
+          let stepStatus: 'success' | 'loading' | 'pending' = 'pending';
+          if (originalStatus) {
+            const isStepCompleted = completedSteps?.has(stepTitle);
+            stepStatus = isStepCompleted ? 'success' : originalStatus;
+          }
+
+          const parts = childStr.split(/\[STEP: [^\]]+\]/);
+          const beforeText = parts[0]?.trim();
+          const afterText = parts[1]?.trim() || '';
+
+          return (
+            <li className="text-gray-700">
+              <span>{beforeText}</span>
+              <AgentStep title={stepTitle} status={stepStatus} />
+              <span>{afterText}</span>
+            </li>
+          );
+        }
+
         return (
           <li className="text-gray-700">
             {children}
@@ -325,7 +323,7 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
         return <tr className="hover:bg-gray-50 last:border-b-0">{children}</tr>;
       },
     };
-  }, [copiedCodeIndex, handleCopyCode, isStreaming, completedSteps, onConfirm]);
+  }, [copiedCodeIndex, handleCopyCode, isStreaming, completedSteps, onConfirm, steps, text]);
 
   return (
     <div className="w-full space-y-3">
