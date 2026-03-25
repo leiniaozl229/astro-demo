@@ -4,7 +4,7 @@ content:
 
 好的，为您生成 DWD 层和 DWS 层的高质量 SQL 代码。
 
-[STEP: DAU 代码生成专家 | success]
+[STEP: DAU 代码生成专家 | loading]
 
 #### **第一步：DWD 层（数据明细层）宽表加工**
 

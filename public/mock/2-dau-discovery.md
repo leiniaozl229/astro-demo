@@ -2,7 +2,7 @@ role: assistant
 content:
 **DauAssetDiscoveryExpert → PlanManager**
 
-[STEP: DauAssetDiscoveryExpert | success]
+[STEP: DauAssetDiscoveryExpert | loading]
 
 🔍 **数据资产发现结果**
 

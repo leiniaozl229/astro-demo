@@ -1,10 +1,39 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Message } from './types/chat';
 import { Sidebar } from './components/layout/Sidebar';
 import { ChatMessage } from './components/chat/ChatMessage';
 import { ChatInput } from './components/chat/ChatInput';
 import { loadAllMockResponses } from './mock/mockLoader';
 import { cn } from './utils/cn';
+
+// 优化的历史消息组件 - 使用 memo 避免流式期间重渲染
+const HistoryMessage = React.memo(function HistoryMessage({
+  message,
+  index,
+  onMessageComplete,
+  onConfirm
+}: {
+  message: Message;
+  index: number;
+  onMessageComplete?: () => void;
+  onConfirm?: () => void;
+}) {
+  return (
+    <ChatMessage
+      message={message}
+      index={index}
+      onMessageComplete={onMessageComplete}
+      onConfirm={onConfirm}
+    />
+  );
+}, (prev, next) => {
+  // 只有当消息内容或流式状态变化时才重新渲染
+  // 这确保历史消息在流式期间不会被重渲染
+  return (
+    prev.message.content === next.message.content &&
+    prev.message.isStreaming === next.message.isStreaming
+  );
+});
 
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -91,7 +120,7 @@ export default function App() {
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-[1000px] mx-auto px-6 py-8 space-y-6">
             {messages.map((message, index) => (
-              <ChatMessage
+              <HistoryMessage
                 key={index}
                 message={message}
                 index={index}
