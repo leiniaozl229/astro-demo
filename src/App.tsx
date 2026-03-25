@@ -87,7 +87,7 @@ export default function App() {
 
   // 发送用户消息并触发 assistant 回复
   const handleSendMessage = (userInput: string) => {
-    if (!userInput.trim() || isStreaming) return;
+    if (!userInput.trim()) return;
 
     // 获取当前应该使用的回复
     const response = mockResponses[currentResponseIndex % mockResponses.length];
@@ -104,9 +104,8 @@ export default function App() {
 
   // 确认执行按钮处理
   const handleConfirm = useCallback(() => {
-    if (isStreaming) return;
     handleSendMessage('确认执行数据资产建设方案');
-  }, [isStreaming, handleSendMessage]);
+  }, [handleSendMessage]);
 
   return (
     <div className="h-screen flex bg-[#f5f7fa]">
