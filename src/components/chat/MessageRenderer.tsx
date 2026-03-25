@@ -177,14 +177,12 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
           return (
             <div className="my-2">
               {beforeText && <p className="text-gray-700 leading-relaxed mb-2">{beforeText}</p>}
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={onConfirm}
-                  className="px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
-                >
-                  {confirmText}
-                </button>
-              </div>
+              <button
+                onClick={onConfirm}
+                className="mt-3 px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
+              >
+                {confirmText}
+              </button>
             </div>
           );
         }
