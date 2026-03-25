@@ -81,9 +81,28 @@ export default function App() {
       const newMessages = prev.map(m =>
         m.isStreaming ? { ...m, isStreaming: false } : m
       );
+
+      // 检查是否需要在流式完成后自动触发下一条回复
+      // 例如：第 1 条消息（planner）完成后，自动触发第 2 条（discovery）
+      const lastMessage = newMessages[newMessages.length - 1];
+      const lastIndex = newMessages.length - 1;
+
+      // 如果是第 1 条消息（索引 0）流式完成，自动触发第 2 条
+      if (lastIndex === 0 && lastMessage.role === 'assistant') {
+        // 延迟 500ms 后自动触发下一条
+        setTimeout(() => {
+          setMessages((prev) => [
+            ...prev,
+            { role: 'user' as const, content: '好的，请继续' },
+            { ...mockResponses[1 % mockResponses.length], isStreaming: true },
+          ]);
+          setCurrentResponseIndex((prev) => prev + 1);
+        }, 500);
+      }
+
       return newMessages;
     });
-  }, []);
+  }, [mockResponses]);
 
   // 发送用户消息并触发 assistant 回复
   const handleSendMessage = (userInput: string) => {
