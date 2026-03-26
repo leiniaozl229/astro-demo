@@ -175,12 +175,19 @@ export const MessageRenderer = React.memo(function MessageRenderer({ content, fu
           return (
             <div className="my-2">
               {beforeText && <p className="text-gray-700 leading-relaxed mb-2">{beforeText}</p>}
-              <button
-                onClick={onConfirm}
-                className="mt-3 px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
-              >
-                {confirmText}
-              </button>
+              <div className="flex items-center gap-3 mt-4">
+                <button
+                  onClick={onConfirm}
+                  className="px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
+                >
+                  {confirmText}
+                </button>
+                <button
+                  className="px-5 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-xl transition-colors"
+                >
+                  取消
+                </button>
+              </div>
             </div>
           );
         }
