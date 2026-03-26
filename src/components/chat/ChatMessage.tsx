@@ -78,13 +78,6 @@ export function ChatMessage({ message, index, onMessageComplete, onConfirm }: Ch
 
       {/* 消息内容 */}
       <div className={cn('flex-1 min-w-0', isUser ? 'flex flex-col items-end' : '')}>
-        {/* 名字和时间 */}
-        <div className={cn('flex items-center gap-2 mb-1', isUser ? 'flex-row-reverse' : '')}>
-          <span className="text-sm font-medium text-gray-700">
-            {isUser ? '您' : 'PlanManager'}
-          </span>
-        </div>
-
         {/* 消息气泡 */}
         <div
           className={cn(
