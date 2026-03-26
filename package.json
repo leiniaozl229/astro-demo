@@ -2,12 +2,14 @@
   "name": "astro-demo-260324",
   "version": "1.0.0",
   "description": "AI Agent Chat Demo - Astro Style",
+  "homepage": "https://leiniaozl229.github.io/astro-demo",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -22,6 +24,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.21",
     "clsx": "^2.1.1",
+    "gh-pages": "^6.3.0",
     "lucide-react": "^0.468.0",
     "postcss": "^8.5.3",
     "react-markdown": "^9.0.3",
