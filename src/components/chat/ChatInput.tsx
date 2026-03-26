@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Box } from 'lucide-react';
+import { Send, Paperclip, Bot } from 'lucide-react';
 
 interface ChatInputProps {
   disabled?: boolean;
@@ -45,7 +45,7 @@ export function ChatInput({ disabled = false, onSend }: ChatInputProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="你有数据问题，我有专业解法"
+            placeholder="输入需求，多Agent自动规划并执行最优数据任务路径"
             disabled={disabled}
             rows={3}
             className="w-full h-12 bg-transparent border-none outline-none resize-none text-sm text-gray-700 placeholder-gray-400"
@@ -56,8 +56,8 @@ export function ChatInput({ disabled = false, onSend }: ChatInputProps) {
             {/* 左侧标签按钮 */}
             <div className="flex items-center gap-2">
               <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-full text-xs font-medium transition-colors">
-                <Box className="w-3.5 h-3.5" />
-                <span>数据血缘</span>
+                <Bot className="w-3.5 h-3.5" />
+                <span>数据导航</span>
               </button>
             </div>
 
@@ -67,7 +67,7 @@ export function ChatInput({ disabled = false, onSend }: ChatInputProps) {
                 className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
                 title="知识库"
               >
-                <Box className="w-5 h-5" />
+                <Bot className="w-5 h-5" />
               </button>
               <button
                 className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
