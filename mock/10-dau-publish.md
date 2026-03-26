@@ -2,6 +2,8 @@ role: assistant
 content:
 **资产发布专家 → PlanManager**
 
+好的，我已经获取了步骤2和步骤3中生成的DWD与DWS层数据表信息。现在，我将为您完成资产规范化登记，确保DAU相关数据资产可被发现与使用。
+
 [STEP: 资产发布专家 | loading]
 
 #### ✅ 数据资产发布完成
