@@ -2,6 +2,8 @@ role: assistant
 content:
 **数据资产发现专家 → PlanManager**
 
+好的，我将为您深入分析用户登录日志和活跃事件，从中发现并提取关键的数据资产元信息。
+
 [STEP: 数据资产发现专家 | loading]
 
 🔍 **数据资产发现结果**

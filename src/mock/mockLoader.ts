@@ -12,7 +12,8 @@ export interface MockResponse {
  */
 export function parseMockResponse(mdContent: string): MockResponse | null {
   const roleMatch = mdContent.match(/^role:\s*(assistant|user)\s*/im);
-  const contentMatch = mdContent.match(/^content:\s*([\s\S]*)$/im);
+  // 匹配 content: 后面的所有内容（包括多行）
+  const contentMatch = mdContent.match(/^content:\s*([\s\S]+)/im);
 
   if (roleMatch && contentMatch) {
     return {
