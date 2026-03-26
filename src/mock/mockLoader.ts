@@ -46,10 +46,16 @@ export async function loadMockResponse(filename: string): Promise<MockResponse |
  */
 export async function loadAllMockResponses(): Promise<MockResponse[]> {
   const files = [
-    '1-planner-response.md',
-    '2-dau-discovery.md',
-    '3-dau-codegen.md',
-    '4-requirement-confirm.md'
+    '1-solution-confirmation.md',
+    '2-planner-response.md',
+    '3-PlanManager.md',
+    '4-dau-discovery.md',
+    '5-PlanManager.md',
+    '6-dau-codegen.md',
+    '7-PlanManager.md',
+    '8-dau-schedule.md',
+    '9-PlanManager.md',
+    '10-dau-publish.md'
   ];
 
   const responses: MockResponse[] = [];

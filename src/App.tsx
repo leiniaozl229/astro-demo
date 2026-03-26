@@ -83,19 +83,33 @@ export default function App() {
       );
 
       // 检查是否需要在流式完成后自动触发下一条回复
-      // 逻辑：当第 1 条 assistant 消息流式完成后，直接追加第 2 条 assistant 消息（不插入用户消息）
+      // 逻辑：第 1、2 条由用户消息触发，第 3 条开始自动连续输出
       const lastMessage = newMessages[newMessages.length - 1];
+      const messagesCount = newMessages.length;
 
-      // 检查是否是第 1 轮对话的 assistant 消息（total=2 时说明是第 1 轮）
-      if (newMessages.length === 2 && lastMessage.role === 'assistant' && !lastMessage.isStreaming) {
-        // 延迟 500ms 后直接追加第 2 条 assistant 消息
-        setTimeout(() => {
-          setMessages((prev) => [
-            ...prev,
-            { ...mockResponses[1 % mockResponses.length], isStreaming: true },
-          ]);
-          setCurrentResponseIndex((prev) => prev + 1);
-        }, 500);
+      // 第 3 条开始（索引 2 的 assistant 消息，即总消息数为 4, 6, 8...时）自动触发下一条
+      // 消息流程：用户 (0) + 助理 (1) = 第 1 条
+      //         用户 (2) + 助理 (3) = 第 2 条
+      //         助理 (4) = 第 3 条自动触发开始
+      if (messagesCount >= 4 && lastMessage.role === 'assistant' && !lastMessage.isStreaming) {
+        // 计算当前是第几条 assistant 消息
+        const assistantIndex = newMessages.filter(m => m.role === 'assistant').length - 1;
+
+        // 从第 3 条开始（索引 2）自动触发后续消息
+        if (assistantIndex >= 2 && assistantIndex < mockResponses.length) {
+          // 延迟 800ms - 1500ms 随机，增加真实感
+          const delay = Math.floor(Math.random() * 700) + 800;
+          setTimeout(() => {
+            const nextIndex = assistantIndex + 1;
+            if (nextIndex < mockResponses.length) {
+              setMessages((prev) => [
+                ...prev,
+                { ...mockResponses[nextIndex % mockResponses.length], isStreaming: true },
+              ]);
+              setCurrentResponseIndex((prev) => prev + 1);
+            }
+          }, delay);
+        }
       }
 
       return newMessages;
