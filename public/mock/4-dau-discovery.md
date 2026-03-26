@@ -1,12 +1,15 @@
 role: assistant
 content:
-**DauAssetDiscoveryExpert → PlanManager**
+**数据资产发现专家 → PlanManager**
 
-[STEP: DauAssetDiscoveryExpert | loading]
+[STEP: 数据资产发现专家 | loading]
 
 🔍 **数据资产发现结果**
 
 数据源：**AstroDB-Production**
+
+执行结果已输出，展示前10条数据用于预览。
+完整结果数据可下载文件或在线预览查看。
 
 | 表名 | Schema | 说明 | 分区 | 日切量 |
 | --- | --- | --- | --- | --- |

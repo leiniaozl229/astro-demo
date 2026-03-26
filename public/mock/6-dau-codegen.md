@@ -1,10 +1,10 @@
 role: assistant
 content:
-**DAU 代码生成专家 → PlanManager**
+**代码生成专家 → PlanManager**
 
-好的，为您生成 DWD 层和 DWS 层的高质量 SQL 代码。
+好的，我已经仔细阅读了历史消息中步骤1的数据资产发现结果。现在，我将基于这些元数据信息，为您生成DWD层和DWS层的高质量SQL代码。
 
-[STEP: DAU 代码生成专家 | loading]
+[STEP: 代码生成专家 | loading]
 
 #### **第一步：DWD 层（数据明细层）宽表加工**
 
